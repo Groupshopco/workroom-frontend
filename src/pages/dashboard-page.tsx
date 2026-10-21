@@ -1,3 +1,7 @@
+import { EmptyWorkrooms } from '../components/empty-workrooms'
+import { WorkroomLayout } from '../components/workroom-layout'
+import { WorkroomListToolbar } from '../components/workroom-list-toolbar'
+/*
 import { authClient } from '../lib/auth-client'
 import { UsersTable } from '../components/users-table'
 
@@ -31,5 +35,20 @@ export function DashboardPage() {
         </div>
       </footer>
     </div>
+  )
+}
+*/
+
+export function DashboardPage() {
+  return (
+    <WorkroomLayout>
+      <section className="dashboard-content">
+        <WorkroomListToolbar
+          title="Try Workroom: AI-Powered Spreadsheet editor"
+          description="Quickly generate, customize, and manage large spreadsheets."
+        />
+        <EmptyWorkrooms />
+      </section>
+    </WorkroomLayout>
   )
 }

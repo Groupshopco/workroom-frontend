@@ -1,5 +1,4 @@
 import { Outlet, createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
-import { authClient } from './lib/auth-client'
 import { SignInPage, SignUpPage } from './pages/auth-pages'
 import { DashboardPage } from './pages/dashboard-page'
 
@@ -30,12 +29,12 @@ const signUpRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dashboard',
-  beforeLoad: async () => {
-    const session = await authClient.getSession()
-    if (!session.data?.session) {
-      throw redirect({ to: '/sign-in' })
-    }
-  },
+  // beforeLoad: async () => {
+  //   const session = await authClient.getSession()
+  //   if (!session.data?.session) {
+  //     throw redirect({ to: '/sign-in' })
+  //   }
+  // },
   component: DashboardPage,
 })
 

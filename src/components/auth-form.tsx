@@ -15,7 +15,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const title = mode === 'sign-in' ? 'Sign In' : 'Sign Up'
+  const title = mode === 'sign-in' ? 'Sign in' : 'Sign up'
   const isPasswordValid = password.length >= 7
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -57,73 +57,88 @@ export function AuthForm({ mode }: AuthFormProps) {
   }
 
   return (
-    <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h1 className="mb-6 text-2xl font-bold">{title}</h1>
+    <section className={`auth-form auth-form--${mode}`}>
+      <h1 className="auth-title">{title}</h1>
 
       <button
         type="button"
         onClick={handleGoogleAuth}
-        className="mb-4 w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50"
+        className="google-auth-button"
       >
+        <svg aria-hidden="true" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.27h2.92c1.7-1.56 2.68-3.86 2.68-6.63Z" />
+          <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.17l-2.92-2.27c-.8.54-1.83.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.34A9 9 0 0 0 9 18Z" />
+          <path fill="#FBBC05" d="M3.97 10.71a5.4 5.4 0 0 1 0-3.42V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.34Z" />
+          <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.43 1.35l2.57-2.57A8.6 8.6 0 0 0 9 0a9 9 0 0 0-8.04 4.95l3.01 2.34C4.68 5.16 6.66 3.58 9 3.58Z" />
+        </svg>
         Continue with Google
       </button>
 
-      <div className="my-4 text-center text-sm text-slate-500">or</div>
+      <div className="auth-divider" aria-hidden="true" />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+      <form onSubmit={handleSubmit} className="auth-fields">
+        <div className="auth-field">
+          <label htmlFor={`${mode}-email`}>Enter email address</label>
           <input
+            id={`${mode}-email`}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             required
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
+        <div className="auth-field">
+          <label htmlFor={`${mode}-password`}>Create Password</label>
           <input
+            id={`${mode}-password`}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={7}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
           />
-          <p className="mt-1 text-xs text-slate-500">Minimum 7 characters.</p>
+          {mode === 'sign-up' ? (
+            <p className="password-hint">Use at least 7 characters.</p>
+          ) : null}
         </div>
 
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="auth-submit-button"
         >
-          {isSubmitting ? 'Please wait...' : title}
+          {isSubmitting ? 'Please wait...' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
         </button>
       </form>
 
-      <p className="mt-4 text-center text-sm text-slate-600">
+      <p className="auth-switch">
         {mode === 'sign-in' ? (
           <>
-            New here?{' '}
-            <Link to="/sign-up" className="font-semibold text-slate-900 underline">
-              Create account
+            Don’t have an account?{' '}
+            <Link to="/sign-up">
+              Sign up
             </Link>
           </>
         ) : (
           <>
-            Already have an account?{' '}
-            <Link to="/sign-in" className="font-semibold text-slate-900 underline">
-              Sign in
+            Already a member?{' '}
+            <Link to="/sign-in">
+              Login
             </Link>
           </>
         )}
       </p>
-    </div>
+      {mode === 'sign-up' ? (
+        <p className="auth-legal">
+          By continuing, you acknowledge that you understand and
+          <br />
+          agree to the <strong>Terms &amp; Conditions</strong> and <strong>Privacy Policy</strong>
+        </p>
+      ) : null}
+    </section>
   )
 }
