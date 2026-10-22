@@ -1,6 +1,10 @@
-import { EmptyWorkrooms } from '../components/empty-workrooms'
+// Lists workrooms and starts creating new ones.
+import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { WorkroomCards } from '../components/workroom-cards'
 import { WorkroomLayout } from '../components/workroom-layout'
 import { WorkroomListToolbar } from '../components/workroom-list-toolbar'
+import { createWorkroom, getWorkroomSummaries } from '../lib/workrooms'
 /*
 import { authClient } from '../lib/auth-client'
 import { UsersTable } from '../components/users-table'
@@ -40,14 +44,33 @@ export function DashboardPage() {
 */
 
 export function DashboardPage() {
+  const navigate = useNavigate()
+  const [workrooms] = useState(getWorkroomSummaries)
+
+  const handleCreateWorkroom = () => {
+    const workroom = createWorkroom()
+    void navigate({
+      to: '/workroom/$workroomId',
+      params: { workroomId: workroom.id },
+    })
+  }
+
+  const handleOpenWorkroom = (workroomId: string) => {
+    void navigate({
+      to: '/workroom/$workroomId',
+      params: { workroomId },
+    })
+  }
+
   return (
     <WorkroomLayout>
       <section className="dashboard-content">
         <WorkroomListToolbar
           title="Try Workroom: AI-Powered Spreadsheet editor"
           description="Quickly generate, customize, and manage large spreadsheets."
+          onCreateWorkroom={handleCreateWorkroom}
         />
-        <EmptyWorkrooms />
+        <WorkroomCards items={workrooms} onOpen={handleOpenWorkroom} />
       </section>
     </WorkroomLayout>
   )

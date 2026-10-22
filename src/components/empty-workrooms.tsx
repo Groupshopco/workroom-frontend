@@ -1,3 +1,4 @@
+// Shows the create-workroom prompt when the list is empty on dashboard.
 export function EmptyWorkrooms() {
   return (
     <div className="empty-workrooms">

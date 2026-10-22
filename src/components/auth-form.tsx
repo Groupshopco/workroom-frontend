@@ -1,3 +1,4 @@
+// Handles email and Google sign-in or sign-up.
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from '@tanstack/react-router'

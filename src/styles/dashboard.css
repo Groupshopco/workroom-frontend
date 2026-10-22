@@ -1,0 +1,162 @@
+/* Dashboard heading, toolbar, and empty state styles. */
+/* Dashboard content and heading */
+.workroom-main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 16px 16px 0 8px;
+}
+
+.workroom-main::-webkit-scrollbar {
+  display: none;
+}
+
+.dashboard-content {
+  display: flex;
+  min-height: calc(100vh - 104px);
+  width: 100%;
+  flex-direction: column;
+}
+
+.workroom-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 0;
+}
+
+.page-heading {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.page-heading h1 {
+  margin: 0;
+  color: #292929;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.35px;
+  line-height: 1.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workroom-body,
+  .sidebar-frame,
+  .sidebar-toggle svg {
+    transition-duration: 0.01ms;
+  }
+}
+
+.page-heading p {
+  margin: 8px 0 0;
+  color: #858585;
+  font-size: 13px;
+}
+
+.workroom-toolbar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 100%;
+  gap: 12px;
+}
+
+.toolbar-search-button,
+.sort-workrooms-button,
+.new-workroom-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  color: #171717;
+  background: #fff;
+  box-shadow: 0 2px 5px rgb(20 20 20 / 5%);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.toolbar-search-button {
+  width: 38px;
+}
+
+.sort-workrooms-button {
+  padding: 0 12px;
+}
+
+.sort-workrooms-button svg {
+  width: 16px;
+  height: 16px;
+  transform: rotate(90deg);
+}
+
+.new-workroom-button {
+  border-color: #e96349;
+  color: #fff;
+  background: #e96349;
+}
+
+.new-workroom-button {
+  min-height: 34px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.toolbar-search-button svg,
+.new-workroom-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.new-workroom-button:hover {
+  background: #d9573e;
+}
+
+/* Empty workroom state */
+.empty-workrooms {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 390px;
+  padding: 24px 0 78px;
+}
+
+.empty-workrooms-art {
+  display: block;
+  width: 176px;
+  height: auto;
+  margin-bottom: 16px;
+}
+
+.create-workroom-button {
+  min-width: 183px;
+  min-height: 34px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  background: #e96349;
+  box-shadow: 0 3px 5px rgb(194 77 53 / 20%);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.create-workroom-button:hover {
+  background: #d9573e;
+}
+

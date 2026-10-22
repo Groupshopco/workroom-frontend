@@ -1,3 +1,4 @@
+// Displays the team user list in a table.
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 
 type UserRow = {

@@ -1,0 +1,329 @@
+/* Responsive overrides for the app shell and pages. */
+/* Compact header for medium screens */
+@media (max-width: 1050px) {
+  .workroom-header {
+    grid-template-columns: minmax(160px, 1fr) minmax(200px, 1fr) auto;
+    gap: 14px;
+    padding: 0 20px;
+  }
+
+  .header-actions {
+    gap: 7px;
+  }
+
+  .header-action {
+    font-size: 0;
+  }
+
+  .header-action svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .workroom-list-toolbar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .workroom-toolbar-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .workroom-main {
+    padding-right: 4px;
+  }
+
+  .workroom-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spreadsheet-editor-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-bottom: 12px;
+  }
+
+  .spreadsheet-editor-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .spreadsheet-auto-run,
+  .spreadsheet-import-button,
+  .spreadsheet-command-button {
+    min-height: 42px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .spreadsheet-import-button,
+  .spreadsheet-command-button {
+    min-width: 0;
+  }
+
+  .spreadsheet-sheet-tabs {
+    height: 52px;
+    padding: 0 8px;
+  }
+
+  .spreadsheet-sheet-tab {
+    min-width: 190px;
+    padding: 0 10px;
+  }
+
+  .spreadsheet-sheet-tab.is-active {
+    height: 44px;
+  }
+
+  .spreadsheet-toolbar {
+    min-height: 46px;
+    gap: 4px;
+    padding: 0 10px;
+  }
+
+  .spreadsheet-grid th,
+  .spreadsheet-grid td {
+    width: 220px;
+    height: 46px;
+  }
+
+  .spreadsheet-grid thead th:not(.spreadsheet-row-number):not(.spreadsheet-add-column-cell) {
+    min-width: 220px;
+  }
+}
+
+/* Sidebar and header for small screens */
+@media (max-width: 720px) {
+  .workroom-header {
+    grid-template-columns: auto minmax(120px, 1fr) auto;
+    gap: 10px;
+    padding: 0 12px;
+  }
+
+  .header-brand {
+    gap: 6px;
+  }
+
+  .brand-logo {
+    width: 120px;
+    height: auto;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .header-action,
+  .notification-button {
+    display: none;
+  }
+
+  .header-signup,
+  .new-workroom-button {
+    min-height: 31px;
+    padding: 0 11px;
+    font-size: 10px;
+  }
+
+  .workroom-body {
+    gap: 10px;
+    padding: 8px;
+  }
+
+  .sidebar-frame {
+    flex-basis: 54px;
+    padding: 5px;
+    border-radius: 15px;
+  }
+
+  .sidebar-panel {
+    min-height: calc(100vh - 88px);
+    align-items: center;
+    padding: 8px 3px;
+  }
+
+  .sidebar-navigation {
+    width: 100%;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .sidebar-link span,
+  .sidebar-promo {
+    display: none;
+  }
+
+  .workroom-main {
+    padding: 16px 4px 0 7px;
+  }
+
+  .dashboard-content {
+    min-height: calc(100vh - 80px);
+  }
+
+  .page-heading h1 {
+    font-size: 18px;
+  }
+
+  .page-heading p {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .workroom-list-toolbar {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .workroom-toolbar-actions {
+    width: 100%;
+  }
+
+  .sort-workrooms-button,
+  .new-workroom-button {
+    flex: 1;
+  }
+
+  .new-workroom-button {
+    padding: 0 10px;
+  }
+
+  .workroom-cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding-top: 20px;
+  }
+
+  .empty-workrooms {
+    padding-bottom: 38px;
+  }
+
+  .workroom-card {
+    min-height: 205px;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .workroom-card-title {
+    font-size: 17px;
+  }
+
+  .spreadsheet-editor-heading {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .spreadsheet-breadcrumbs {
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .spreadsheet-title {
+    max-width: min(240px, calc(100vw - 180px));
+    font-size: 14px;
+  }
+
+  .spreadsheet-title-edit {
+    width: 36px;
+    height: 36px;
+  }
+
+  .spreadsheet-sheet-tabs {
+    padding: 0 5px;
+  }
+
+  .spreadsheet-sheet-tab {
+    min-width: 160px;
+    padding: 0 8px;
+  }
+
+  .spreadsheet-editor-actions {
+    gap: 6px;
+  }
+
+  .spreadsheet-auto-run,
+  .spreadsheet-import-button,
+  .spreadsheet-command-button {
+    min-height: 38px;
+    gap: 7px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .spreadsheet-auto-run {
+    flex: 1;
+  }
+
+  .spreadsheet-command-button {
+    flex: 1;
+  }
+
+  .spreadsheet-import-button svg,
+  .spreadsheet-command-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .spreadsheet-toolbar {
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 4px 6px;
+  }
+
+  .spreadsheet-toolbar .spreadsheet-tool-button {
+    gap: 4px;
+    padding: 0 5px;
+    font-size: 11px;
+  }
+
+  .spreadsheet-filter-input {
+    max-width: 100%;
+    margin-left: 0;
+  }
+
+  .spreadsheet-filter-input input {
+    width: min(120px, 35vw);
+  }
+
+  .spreadsheet-grid {
+    font-size: 13px;
+  }
+
+  .spreadsheet-grid .spreadsheet-row-number,
+  .spreadsheet-grid .spreadsheet-add-column-cell,
+  .spreadsheet-grid .spreadsheet-add-row-cell {
+    width: 48px;
+    min-width: 48px;
+  }
+
+  .spreadsheet-grid .spreadsheet-grid-extra-cell {
+    width: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Narrow phone adjustments */
+@media (max-width: 420px) {
+  .search-box {
+    gap: 6px;
+    padding: 0 9px;
+  }
+
+  .search-box input {
+    font-size: 11px;
+  }
+
+  .brand-logo {
+    width: 96px;
+  }
+
+  .page-heading h1 {
+    font-size: 16px;
+  }
+}

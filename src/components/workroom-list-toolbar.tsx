@@ -1,11 +1,17 @@
+// Shows the dashboard heading and workroom list actions.
 import { AppIcon } from './app-icon'
 
 type WorkroomListToolbarProps = {
   title: string
   description: string
+  onCreateWorkroom: () => void
 }
 
-export function WorkroomListToolbar({ title, description }: WorkroomListToolbarProps) {
+export function WorkroomListToolbar({
+  title,
+  description,
+  onCreateWorkroom,
+}: WorkroomListToolbarProps) {
   return (
     <div className="workroom-list-toolbar">
       <div className="page-heading">
@@ -25,7 +31,7 @@ export function WorkroomListToolbar({ title, description }: WorkroomListToolbarP
           <AppIcon name="chevron" />
           <span>Most recent</span>
         </button>
-        <button className="new-workroom-button" type="button">
+        <button className="new-workroom-button" type="button" onClick={onCreateWorkroom}>
           <AppIcon name="plus" />
           <span>New workroom</span>
         </button>

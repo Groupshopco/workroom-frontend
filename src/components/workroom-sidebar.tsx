@@ -1,3 +1,4 @@
+// Renders the primary navigation and sign-up promotion.
 import { Link } from '@tanstack/react-router'
 import { AppIcon, type AppIconName } from './app-icon'
 

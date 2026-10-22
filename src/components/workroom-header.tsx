@@ -1,4 +1,5 @@
-import { Link } from '@tanstack/react-router'
+// Renders the global brand, search, and workspace actions.
+import { Link, useRouterState } from '@tanstack/react-router'
 import { AppIcon } from './app-icon'
 
 type WorkroomHeaderProps = {
@@ -7,6 +8,10 @@ type WorkroomHeaderProps = {
 }
 
 export function WorkroomHeader({ isSidebarCollapsed, onToggleSidebar }: WorkroomHeaderProps) {
+  const isSpreadsheetEditor = useRouterState({
+    select: (state) => state.location.pathname.startsWith('/workroom/'),
+  })
+
   return (
     <header className="workroom-header">
       <div className="header-brand">
@@ -30,13 +35,27 @@ export function WorkroomHeader({ isSidebarCollapsed, onToggleSidebar }: Workroom
       </label>
 
       <nav className="header-actions" aria-label="Workspace actions">
+        {isSpreadsheetEditor && (
+          <button
+            className="header-action editor-refresh-button"
+            type="button"
+            aria-label="Refresh spreadsheet"
+            onClick={() => window.location.reload()}
+          >
+            <AppIcon name="refresh" />
+          </button>
+        )}
         <button className="header-action" type="button"><AppIcon name="share" /><span>Share</span></button>
         <button className="header-action" type="button"><AppIcon name="upload" /><span>Export</span></button>
         <button className="header-action" type="button"><AppIcon name="more" /><span>More</span></button>
         <button className="icon-button notification-button" type="button" aria-label="Notifications">
           <AppIcon name="bell" />
         </button>
-        <Link className="header-signup" to="/sign-up">Sign up for free</Link>
+        {isSpreadsheetEditor ? (
+          <button className="header-profile-button" type="button" aria-label="Account profile">JD</button>
+        ) : (
+          <Link className="header-signup" to="/sign-up">Sign up for free</Link>
+        )}
       </nav>
     </header>
   )

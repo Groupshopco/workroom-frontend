@@ -1,3 +1,4 @@
+// Provides the sign-in and sign-up screens.
 import type { ReactNode } from 'react'
 import { AuthForm } from '../components/auth-form'
 import '../styles/auth-pages.css'
