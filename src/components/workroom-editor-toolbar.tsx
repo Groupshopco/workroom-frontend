@@ -6,23 +6,48 @@ import { Modal } from './modal'
 
 type WorkroomEditorToolbarProps = {
   title: string
+  isCommandCenterOpen: boolean
   onTitleChange: (title: string) => void
   onImport: (file: File) => void
+  onToggleCommandCenter: () => void
 }
 
 export function WorkroomEditorToolbar({
   title,
+  isCommandCenterOpen,
   onTitleChange,
   onImport,
+  onToggleCommandCenter,
 }: WorkroomEditorToolbarProps) {
   const [isAutoRunEnabled, setIsAutoRunEnabled] = useState(true)
-  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false)
   const [isWorkroomMenuOpen, setIsWorkroomMenuOpen] = useState(false)
+  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false)
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false)
   const [draftTitle, setDraftTitle] = useState(title)
   const importInput = useRef<HTMLInputElement>(null)
+  const importMenu = useRef<HTMLDivElement>(null)
   const titleGroup = useRef<HTMLDivElement>(null)
   const closeRenameModal = useCallback(() => setIsRenameModalOpen(false), [])
+
+  useEffect(() => {
+    if (!isImportMenuOpen) return
+
+    const closeMenuOnOutsideClick = (event: MouseEvent) => {
+      if (event.target instanceof Node && !importMenu.current?.contains(event.target)) {
+        setIsImportMenuOpen(false)
+      }
+    }
+    const closeMenuOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsImportMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', closeMenuOnOutsideClick)
+    document.addEventListener('keydown', closeMenuOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeMenuOnOutsideClick)
+      document.removeEventListener('keydown', closeMenuOnEscape)
+    }
+  }, [isImportMenuOpen])
 
   useEffect(() => {
     if (!isWorkroomMenuOpen) return
@@ -114,45 +139,69 @@ export function WorkroomEditorToolbar({
               <span />
             </span>
           </button>
-          <button
-            className="spreadsheet-import-button"
-            type="button"
-            onClick={() => importInput.current?.click()}
-          >
-            <AppIcon name="plus" />
-            <span>Import new</span>
-          </button>
-          <input
-            ref={importInput}
-            className="spreadsheet-file-input"
-            type="file"
-            accept=".csv,text/csv"
-            aria-label="Import CSV file"
-            onChange={(event) => {
-              const file = event.target.files?.[0]
-              if (file) onImport(file)
-              event.target.value = ''
-            }}
-          />
-          <button
-            className={`spreadsheet-command-button${isCommandCenterOpen ? ' is-open' : ''}`}
-            type="button"
-            aria-expanded={isCommandCenterOpen}
-            onClick={() => setIsCommandCenterOpen((open) => !open)}
-          >
-            <AppIcon name="eye" />
-            <span>AI Command center</span>
-          </button>
+          <div className="spreadsheet-import-menu-wrap" ref={importMenu}>
+            <button
+              className="spreadsheet-import-button"
+              type="button"
+              aria-expanded={isImportMenuOpen}
+              aria-haspopup="menu"
+              onClick={() => setIsImportMenuOpen((open) => !open)}
+            >
+              <AppIcon name="plus" />
+              <span>Import new</span>
+            </button>
+            {isImportMenuOpen && (
+              <div className="spreadsheet-import-menu" role="menu" aria-label="Import options">
+                <button
+                  className="spreadsheet-import-menu-item is-highlighted"
+                  type="button"
+                  role="menuitem"
+                  disabled
+                  title="Excel import is not available yet"
+                >
+                  Import from excel
+                </button>
+                <button
+                  className="spreadsheet-import-menu-item"
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setIsImportMenuOpen(false)
+                    importInput.current?.click()
+                  }}
+                >
+                  Import csv files
+                </button>
+              </div>
+            )}
+            <input
+              ref={importInput}
+              className="spreadsheet-file-input"
+              type="file"
+              accept=".csv,text/csv"
+              aria-label="Import CSV file"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                if (file) onImport(file)
+                event.target.value = ''
+              }}
+            />
+          </div>
+          {!isCommandCenterOpen && (
+            <button
+              className="spreadsheet-command-button"
+              type="button"
+              aria-label="Open command center"
+              aria-expanded={false}
+              title="Open command center"
+              onClick={onToggleCommandCenter}
+            >
+              <AppIcon name="eye" />
+              <span>AI Command center</span>
+            </button>
+          )}
         </div>
       </div>
-
-      {isCommandCenterOpen && (
-        <div className="spreadsheet-command-panel">
-          <strong>AI Command center</strong>
-          <p>Describe what you want to do with this spreadsheet.</p>
-          <input aria-label="Describe a spreadsheet task" placeholder="Ask Workroom AI..." />
-        </div>
-      )}
 
       {isRenameModalOpen && (
         <Modal title="Edit Workroom name" onClose={closeRenameModal}>

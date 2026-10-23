@@ -1,0 +1,246 @@
+.command-center {
+  display: flex;
+  width: min(345px, 38%);
+  min-width: 280px;
+  min-height: 0;
+  flex: 0 0 min(345px, 38%);
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px;
+  border-radius: 22px;
+  background: #f4f4f4;
+}
+
+.command-center-card,
+.command-center-composer {
+  border-radius: 24px;
+  background: #fff;
+}
+
+.command-center-card {
+  padding: 16px;
+}
+
+.command-center-header,
+.command-center-actions {
+  display: flex;
+  align-items: center;
+}
+
+.command-center-header {
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.command-center-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.command-center-actions {
+  gap: 5px;
+}
+
+.command-center-model select {
+  max-width: 94px;
+  height: 30px;
+  padding: 0 7px;
+  border: 1px solid #f1ded9;
+  border-radius: 10px;
+  color: #e96349;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+}
+
+.command-center-icon-button {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  color: #555;
+  background: transparent;
+  cursor: pointer;
+}
+
+.command-center-icon-button:hover {
+  color: #e96349;
+  background: #fff2ee;
+}
+
+.command-center-icon-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.command-center-menu-wrap {
+  position: relative;
+}
+
+.command-center-menu-item {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 120px;
+  padding: 9px 11px;
+  border: 1px solid #eee;
+  border-radius: 9px;
+  color: #333;
+  background: #fff;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 10%);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.command-center-help {
+  display: inline-block;
+  margin-top: 14px;
+  color: #77758b;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.command-center-help:hover {
+  color: #e96349;
+}
+
+.command-center-description {
+  margin: 9px 0 2px;
+  color: #171717;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.command-center-composer {
+  display: flex;
+  min-height: 205px;
+  flex-direction: column;
+  margin-top: auto;
+  padding: 14px;
+  border: 1px solid #f2c9c0;
+  box-shadow: 0 2px 4px rgb(190 82 62 / 16%);
+}
+
+.command-center-composer textarea {
+  width: 100%;
+  min-height: 110px;
+  flex: 1;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  color: #222;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.command-center-composer textarea::placeholder {
+  color: #999;
+}
+
+.command-center-attachment {
+  max-width: 100%;
+  overflow: hidden;
+  color: #777;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-center-notice {
+  margin: 6px 0;
+  color: #777;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.command-center-composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+}
+
+.command-center-utility-button {
+  display: inline-flex;
+  min-width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid #e9e9e9;
+  border-radius: 10px;
+  color: #333;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.command-center-utility-button svg,
+.command-center-send-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.command-center-focus-button svg {
+  color: #e96349;
+}
+
+.command-center-focus-button.is-active {
+  border-color: #f2c9c0;
+  background: #fff2ee;
+}
+
+.command-center-send-button {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  border: 0;
+  border-radius: 11px;
+  color: #fff;
+  background: #e96349;
+  cursor: pointer;
+}
+
+.command-center-send-button:disabled {
+  background: #e96349;
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.command-center.is-focus-mode .command-center-description {
+  color: #777;
+}
+
+@media (max-width: 1050px) {
+  .command-center {
+    width: 300px;
+    min-width: 260px;
+    flex-basis: 300px;
+  }
+}
+
+@media (max-width: 720px) {
+  .command-center {
+    width: 100%;
+    min-width: 0;
+    min-height: 360px;
+    flex: 0 0 380px;
+  }
+}

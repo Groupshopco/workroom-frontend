@@ -1,7 +1,9 @@
 // Manages spreadsheet tabs, cells, rows, columns, search, and filters.
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AppIcon } from './app-icon'
-import type { WorkroomSheet } from '../lib/workrooms'
+import '../styles/column-prompt.css'
+import type { WorkroomColumnPromptConfig, WorkroomSheet } from '../lib/workrooms'
 
 type SpreadsheetWorkspaceProps = {
   sheets: WorkroomSheet[]
@@ -25,9 +27,19 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
   const [searchText, setSearchText] = useState('')
   const [filterColumn, setFilterColumn] = useState<number | null>(null)
   const [filterText, setFilterText] = useState('')
+  const [isColumnPromptOpen, setIsColumnPromptOpen] = useState(false)
+  const [columnPromptPosition, setColumnPromptPosition] = useState({ top: 8, left: 8 })
+  const [columnTitle, setColumnTitle] = useState('')
+  const [columnContext, setColumnContext] = useState('')
+  const [columnModel, setColumnModel] = useState('GPT - 4o mini')
+  const [isColumnAutoRunEnabled, setIsColumnAutoRunEnabled] = useState(false)
+  const [isColumnFocusMode, setIsColumnFocusMode] = useState(false)
+  const [columnPrompt, setColumnPrompt] = useState('')
+  const [columnAttachmentName, setColumnAttachmentName] = useState('')
+  const addColumnButton = useRef<HTMLButtonElement>(null)
+  const columnPromptDialog = useRef<HTMLFormElement>(null)
+  const columnAttachmentInput = useRef<HTMLInputElement>(null)
   const activeSheet = sheets.find(({ id }) => id === activeSheetId) ?? sheets[0]
-
-  if (!activeSheet) return null
 
   const updateSheet = (updatedSheet: WorkroomSheet) => {
     onChange(sheets.map((sheet) => sheet.id === updatedSheet.id ? updatedSheet : sheet))
@@ -46,12 +58,65 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
     if (activeSheetId === sheetId) setActiveSheetId(remainingSheets[0].id)
   }
 
-  const addColumn = () => {
+  useLayoutEffect(() => {
+    if (!isColumnPromptOpen || !addColumnButton.current || !columnPromptDialog.current) return
+
+    const buttonBounds = addColumnButton.current.getBoundingClientRect()
+    const dialogBounds = columnPromptDialog.current.getBoundingClientRect()
+    setColumnPromptPosition({
+      top: Math.max(
+        8,
+        Math.min(buttonBounds.bottom + 12, window.innerHeight - dialogBounds.height - 8),
+      ),
+      left: Math.max(
+        8,
+        Math.min(buttonBounds.left - 40, window.innerWidth - dialogBounds.width - 8),
+      ),
+    })
+  }, [isColumnPromptOpen])
+
+  useEffect(() => {
+    if (!isColumnPromptOpen) return
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (columnPromptDialog.current?.contains(target) || addColumnButton.current?.contains(target)) return
+      setIsColumnPromptOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsColumnPromptOpen(false)
+    }
+
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [isColumnPromptOpen])
+
+  if (!activeSheet) return null
+
+  const addColumn = (config: WorkroomColumnPromptConfig) => {
+    const title = columnTitle.trim()
+    if (!title) return
     updateSheet({
       ...activeSheet,
-      columns: [...activeSheet.columns, `Column ${activeSheet.columns.length + 1}`],
+      columns: [...activeSheet.columns, title],
       rows: activeSheet.rows.map((row) => [...row, '']),
+      columnPrompts: [
+        ...activeSheet.columns.map((_, index) => activeSheet.columnPrompts?.[index] ?? null),
+        config,
+      ],
     })
+    setColumnTitle('')
+    setColumnContext('')
+    setColumnPrompt('')
+    setColumnAttachmentName('')
+    setIsColumnAutoRunEnabled(false)
+    setIsColumnFocusMode(false)
+    setIsColumnPromptOpen(false)
   }
 
   const addRow = () => {
@@ -123,7 +188,7 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
               onClick={() => closeSheet(sheet.id)}
               disabled={sheets.length === 1}
             >
-              ×
+              <AppIcon name="close" />
             </button>
           </div>
         ))}
@@ -133,7 +198,7 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
           onClick={addSheet}
           aria-label="Add spreadsheet"
         >
-          +
+          <AppIcon name="plus" />
         </button>
       </div>
 
@@ -165,7 +230,9 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
             />
-            <button type="button" aria-label="Close search" onClick={toggleSearch}>×</button>
+            <button type="button" aria-label="Close search" onClick={toggleSearch}>
+              <AppIcon name="close" />
+            </button>
           </label>
         )}
         {filterColumn !== null && (
@@ -185,7 +252,7 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
                 setFilterText('')
               }}
             >
-              ×
+              <AppIcon name="close" />
             </button>
           </label>
         )}
@@ -222,7 +289,15 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
                 </th>
               ))}
               <th className="spreadsheet-add-column-cell">
-                <button type="button" onClick={addColumn} aria-label="Add column">+</button>
+                <button
+                  ref={addColumnButton}
+                  type="button"
+                  onClick={() => setIsColumnPromptOpen(true)}
+                  aria-label="Configure and add column"
+                  aria-expanded={isColumnPromptOpen}
+                >
+                  <AppIcon name="plus" />
+                </button>
               </th>
             </tr>
           </thead>
@@ -239,21 +314,147 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
                     />
                   </td>
                 ))}
-                <td className="spreadsheet-grid-extra-cell" />
               </tr>
             ))}
             <tr>
               <th className="spreadsheet-row-number spreadsheet-add-row-cell">
-                <button type="button" onClick={addRow} aria-label="Add row">+</button>
+                <button type="button" onClick={addRow} aria-label="Add row">
+                  <AppIcon name="plus" />
+                </button>
               </th>
               {activeSheet.columns.map((column, index) => (
                 <td className="spreadsheet-grid-extra-cell" key={`${column}-${index}`} />
               ))}
-              <td className="spreadsheet-grid-extra-cell" />
             </tr>
           </tbody>
         </table>
       </div>
+      {isColumnPromptOpen && createPortal(
+        <form
+          ref={columnPromptDialog}
+          className="column-prompt-dialog"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="column-prompt-title"
+          style={{ top: columnPromptPosition.top, left: columnPromptPosition.left }}
+          onSubmit={(event) => {
+            event.preventDefault()
+            addColumn({
+              context: columnContext.trim(),
+              model: columnModel,
+              autoRun: isColumnAutoRunEnabled,
+              focusMode: isColumnFocusMode,
+              attachmentName: columnAttachmentName,
+              prompt: columnPrompt.trim(),
+            })
+          }}
+        >
+          <header className="column-prompt-header">
+            <h2 id="column-prompt-title">Configure column prompt</h2>
+            <button
+              className="column-prompt-close"
+              type="button"
+              aria-label="Close column prompt"
+              onClick={() => setIsColumnPromptOpen(false)}
+            >
+              <AppIcon name="close" />
+            </button>
+          </header>
+          <label className="column-prompt-field">
+            <span>Column Title</span>
+            <input
+              autoFocus
+              required
+              value={columnTitle}
+              placeholder="Add column title"
+              onChange={(event) => setColumnTitle(event.target.value)}
+            />
+          </label>
+          <label className="column-prompt-field">
+            <span>Context (Optional)</span>
+            <span className="column-prompt-textarea-wrap">
+              <textarea
+                value={columnContext}
+                placeholder="Add context for the column"
+                onChange={(event) => setColumnContext(event.target.value)}
+              />
+              <button
+                type="button"
+                aria-label="Clear column context"
+                onClick={() => setColumnContext('')}
+              >
+                <AppIcon name="refresh" />
+              </button>
+            </span>
+          </label>
+          <label className="column-prompt-field">
+            <span>Model</span>
+            <select value={columnModel} onChange={(event) => setColumnModel(event.target.value)}>
+              <option>GPT - 4o mini</option>
+              <option>GPT 3.5</option>
+              <option>GPT 4</option>
+            </select>
+          </label>
+          <button
+            className="column-prompt-auto-run"
+            type="button"
+            aria-pressed={isColumnAutoRunEnabled}
+            onClick={() => setIsColumnAutoRunEnabled((enabled) => !enabled)}
+          >
+            <span>Auto run prompt</span>
+            <span className={`column-prompt-toggle${isColumnAutoRunEnabled ? ' is-on' : ''}`} aria-hidden="true">
+              <span />
+            </span>
+          </button>
+          <div className="column-prompt-tools">
+            <button
+              type="button"
+              onClick={() => columnAttachmentInput.current?.click()}
+            >
+              Add attachments <AppIcon name="chevron" />
+            </button>
+            <input
+              ref={columnAttachmentInput}
+              className="visually-hidden"
+              type="file"
+              aria-label="Add a column prompt attachment"
+              onChange={(event) => {
+                setColumnAttachmentName(event.target.files?.[0]?.name ?? '')
+                event.target.value = ''
+              }}
+            />
+            <button
+              type="button"
+              aria-pressed={isColumnFocusMode}
+              onClick={() => setIsColumnFocusMode((enabled) => !enabled)}
+            >
+              Add Focus <AppIcon name="chevron" />
+            </button>
+          </div>
+          {columnAttachmentName && (
+            <span className="column-prompt-attachment">{columnAttachmentName}</span>
+          )}
+          <label className="column-prompt-field column-prompt-main-field">
+            <span>Prompt</span>
+            <span className="column-prompt-textarea-wrap">
+              <textarea
+                value={columnPrompt}
+                placeholder="Enter your prompt here."
+                onChange={(event) => setColumnPrompt(event.target.value)}
+              />
+              <button
+                className="column-prompt-submit"
+                type="submit"
+                aria-label="Add configured column"
+                disabled={!columnTitle.trim()}
+              >
+                <AppIcon name="corner-down-left" />
+              </button>
+            </span>
+          </label>
+        </form>,
+        document.body,
+      )}
     </div>
   )
 }

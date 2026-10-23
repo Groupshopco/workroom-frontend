@@ -53,14 +53,18 @@
   .spreadsheet-auto-run,
   .spreadsheet-import-button,
   .spreadsheet-command-button {
-    min-height: 42px;
-    padding: 0 12px;
-    font-size: 13px;
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 12px;
   }
 
   .spreadsheet-import-button,
   .spreadsheet-command-button {
     min-width: 0;
+  }
+
+  .spreadsheet-editor.has-command-center {
+    gap: 8px;
   }
 
   .spreadsheet-sheet-tabs {
@@ -160,6 +164,16 @@
 
   .workroom-main {
     padding: 16px 4px 0 7px;
+  }
+
+  .spreadsheet-editor.has-command-center {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .spreadsheet-editor-content {
+    min-height: 440px;
+    flex: 0 0 440px;
   }
 
   .dashboard-content {

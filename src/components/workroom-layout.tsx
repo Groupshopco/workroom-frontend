@@ -11,16 +11,33 @@ import '../styles/responsive.css'
 
 type WorkroomLayoutProps = {
   children: ReactNode
+  isCommandCenterOpen?: boolean
+  onCommandCenterOpenChange?: (isOpen: boolean) => void
 }
 
-export function WorkroomLayout({ children }: WorkroomLayoutProps) {
+export function WorkroomLayout({
+  children,
+  isCommandCenterOpen = false,
+  onCommandCenterOpenChange,
+}: WorkroomLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const isSidebarHidden = isSidebarCollapsed || isCommandCenterOpen
+
+  const toggleSidebar = () => {
+    if (isCommandCenterOpen) {
+      onCommandCenterOpenChange?.(false)
+      setIsSidebarCollapsed(false)
+      return
+    }
+    if (isSidebarCollapsed) onCommandCenterOpenChange?.(false)
+    setIsSidebarCollapsed(!isSidebarCollapsed)
+  }
 
   return (
-    <div className={`workroom-app${isSidebarCollapsed ? ' is-sidebar-collapsed' : ''}`}>
+    <div className={`workroom-app${isSidebarHidden ? ' is-sidebar-collapsed' : ''}`}>
       <WorkroomHeader
-        isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+        isSidebarCollapsed={isSidebarHidden}
+        onToggleSidebar={toggleSidebar}
       />
       <div className="workroom-body">
         <WorkroomSidebar />

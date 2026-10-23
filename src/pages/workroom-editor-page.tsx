@@ -1,5 +1,6 @@
 // Loads a workroom and coordinates its spreadsheet editor.
 import { Link, useParams } from '@tanstack/react-router'
+import { CommandCenter } from '../components/command-center'
 import { SpreadsheetWorkspace } from '../components/spreadsheet-workspace'
 import { WorkroomEditorToolbar } from '../components/workroom-editor-toolbar'
 import { WorkroomLayout } from '../components/workroom-layout'
@@ -28,6 +29,7 @@ function parseCsv(text: string, fallbackName: string): WorkroomSheet {
 export function WorkroomEditorPage() {
   const { workroomId } = useParams({ from: '/workroom/$workroomId' })
   const [workroom, setWorkroom] = useState(() => getWorkroom(workroomId))
+  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(true)
 
   const updateWorkroom = (changes: Partial<WorkroomRecord>) => {
     if (!workroom) return
@@ -56,17 +58,27 @@ export function WorkroomEditorPage() {
   }
 
   return (
-    <WorkroomLayout>
-      <section className="spreadsheet-editor">
-        <WorkroomEditorToolbar
-          title={workroom.title}
-          onTitleChange={(title) => updateWorkroom({ title })}
-          onImport={(file) => void importCsv(file)}
-        />
-        <SpreadsheetWorkspace
-          sheets={workroom.sheets}
-          onChange={(sheets) => updateWorkroom({ sheets, lastEdited: 'just now' })}
-        />
+    <WorkroomLayout
+      isCommandCenterOpen={isCommandCenterOpen}
+      onCommandCenterOpenChange={setIsCommandCenterOpen}
+    >
+      <section className={`spreadsheet-editor${isCommandCenterOpen ? ' has-command-center' : ''}`}>
+        <div className="spreadsheet-editor-content">
+          <WorkroomEditorToolbar
+            title={workroom.title}
+            isCommandCenterOpen={isCommandCenterOpen}
+            onTitleChange={(title) => updateWorkroom({ title })}
+            onImport={(file) => void importCsv(file)}
+            onToggleCommandCenter={() => setIsCommandCenterOpen(true)}
+          />
+          <SpreadsheetWorkspace
+            sheets={workroom.sheets}
+            onChange={(sheets) => updateWorkroom({ sheets, lastEdited: 'just now' })}
+          />
+        </div>
+        {isCommandCenterOpen && (
+          <CommandCenter onClose={() => setIsCommandCenterOpen(false)} />
+        )}
       </section>
     </WorkroomLayout>
   )

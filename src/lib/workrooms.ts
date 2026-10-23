@@ -3,6 +3,16 @@ export type WorkroomSheet = {
   name: string
   columns: string[]
   rows: string[][]
+  columnPrompts?: Array<WorkroomColumnPromptConfig | null>
+}
+
+export type WorkroomColumnPromptConfig = {
+  context: string
+  model: string
+  autoRun: boolean
+  focusMode: boolean
+  attachmentName: string
+  prompt: string
 }
 
 export type WorkroomRecord = {
