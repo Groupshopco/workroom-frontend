@@ -1,9 +1,36 @@
 // Manages spreadsheet tabs, cells, rows, columns, search, and filters.
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useRef, useState } from 'react'
 import { AppIcon } from './app-icon'
-import './overlays/column-prompt.css'
+import { FilterDropdown, type FilterDropdownAction } from './overlays/filter-dropdown'
+import { ColumnPrompt } from './overlays/column-prompt'
 import type { WorkroomColumnPromptConfig, WorkroomSheet } from '../lib/workrooms'
+
+type PinSide = 'left' | 'right'
+type ColumnNumberRecord<T> = Record<number, T>
+
+function shiftColumnRecord<T>(
+  record: ColumnNumberRecord<T>,
+  fromIndex: number,
+  delta: 1 | -1,
+): ColumnNumberRecord<T> {
+  const next: ColumnNumberRecord<T> = {}
+  for (const [key, value] of Object.entries(record)) {
+    const index = Number(key)
+    if (delta === -1 && index === fromIndex) continue
+    if (delta === 1 && index >= fromIndex) next[index + 1] = value
+    else if (delta === -1 && index > fromIndex) next[index - 1] = value
+    else next[index] = value
+  }
+  return next
+}
+
+function shiftColumnIndex(index: number | null, fromIndex: number, delta: 1 | -1) {
+  if (index === null) return null
+  if (delta === -1 && index === fromIndex) return null
+  if (delta === 1 && index >= fromIndex) return index + 1
+  if (delta === -1 && index > fromIndex) return index - 1
+  return index
+}
 
 type SpreadsheetWorkspaceProps = {
   sheets: WorkroomSheet[]
@@ -27,18 +54,13 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
   const [searchText, setSearchText] = useState('')
   const [filterColumn, setFilterColumn] = useState<number | null>(null)
   const [filterText, setFilterText] = useState('')
+  const [sortColumn, setSortColumn] = useState<number | null>(null)
+  const [pinnedColumns, setPinnedColumns] = useState<ColumnNumberRecord<PinSide>>({})
+  const [columnWidths, setColumnWidths] = useState<ColumnNumberRecord<number>>({})
   const [isColumnPromptOpen, setIsColumnPromptOpen] = useState(false)
-  const [columnPromptPosition, setColumnPromptPosition] = useState({ top: 8, left: 8 })
-  const [columnTitle, setColumnTitle] = useState('')
-  const [columnContext, setColumnContext] = useState('')
-  const [columnModel, setColumnModel] = useState('GPT - 4o mini')
-  const [isColumnAutoRunEnabled, setIsColumnAutoRunEnabled] = useState(false)
-  const [isColumnFocusMode, setIsColumnFocusMode] = useState(false)
-  const [columnPrompt, setColumnPrompt] = useState('')
-  const [columnAttachmentName, setColumnAttachmentName] = useState('')
+  const [columnPromptAnchor, setColumnPromptAnchor] = useState<HTMLButtonElement | null>(null)
+  const [promptColumnIndex, setPromptColumnIndex] = useState<number | null>(null)
   const addColumnButton = useRef<HTMLButtonElement>(null)
-  const columnPromptDialog = useRef<HTMLFormElement>(null)
-  const columnAttachmentInput = useRef<HTMLInputElement>(null)
   const activeSheet = sheets.find(({ id }) => id === activeSheetId) ?? sheets[0]
 
   const updateSheet = (updatedSheet: WorkroomSheet) => {
@@ -58,64 +80,33 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
     if (activeSheetId === sheetId) setActiveSheetId(remainingSheets[0].id)
   }
 
-  useLayoutEffect(() => {
-    if (!isColumnPromptOpen || !addColumnButton.current || !columnPromptDialog.current) return
-
-    const buttonBounds = addColumnButton.current.getBoundingClientRect()
-    const dialogBounds = columnPromptDialog.current.getBoundingClientRect()
-    setColumnPromptPosition({
-      top: Math.max(
-        8,
-        Math.min(buttonBounds.bottom + 12, window.innerHeight - dialogBounds.height - 8),
-      ),
-      left: Math.max(
-        8,
-        Math.min(buttonBounds.left - 40, window.innerWidth - dialogBounds.width - 8),
-      ),
-    })
-  }, [isColumnPromptOpen])
-
-  useEffect(() => {
-    if (!isColumnPromptOpen) return
-
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      const target = event.target
-      if (!(target instanceof Node)) return
-      if (columnPromptDialog.current?.contains(target) || addColumnButton.current?.contains(target)) return
-      setIsColumnPromptOpen(false)
-    }
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsColumnPromptOpen(false)
-    }
-
-    document.addEventListener('mousedown', closeOnOutsideClick)
-    document.addEventListener('keydown', closeOnEscape)
-    return () => {
-      document.removeEventListener('mousedown', closeOnOutsideClick)
-      document.removeEventListener('keydown', closeOnEscape)
-    }
-  }, [isColumnPromptOpen])
-
   if (!activeSheet) return null
 
-  const addColumn = (config: WorkroomColumnPromptConfig) => {
-    const title = columnTitle.trim()
-    if (!title) return
-    updateSheet({
-      ...activeSheet,
-      columns: [...activeSheet.columns, title],
-      rows: activeSheet.rows.map((row) => [...row, '']),
-      columnPrompts: [
-        ...activeSheet.columns.map((_, index) => activeSheet.columnPrompts?.[index] ?? null),
-        config,
-      ],
-    })
-    setColumnTitle('')
-    setColumnContext('')
-    setColumnPrompt('')
-    setColumnAttachmentName('')
-    setIsColumnAutoRunEnabled(false)
-    setIsColumnFocusMode(false)
+  const saveColumn = (title: string, config: WorkroomColumnPromptConfig) => {
+    if (promptColumnIndex === null) {
+      updateSheet({
+        ...activeSheet,
+        columns: [...activeSheet.columns, title],
+        rows: activeSheet.rows.map((row) => [...row, '']),
+        columnPrompts: [
+          ...activeSheet.columns.map((_, index) => activeSheet.columnPrompts?.[index] ?? null),
+          config,
+        ],
+      })
+    } else if (promptColumnIndex < activeSheet.columns.length) {
+      const prompts = activeSheet.columns.map((_, index) => (
+        index === promptColumnIndex
+          ? config
+          : activeSheet.columnPrompts?.[index] ?? null
+      ))
+      updateSheet({
+        ...activeSheet,
+        columns: activeSheet.columns.map((column, index) => (
+          index === promptColumnIndex ? title : column
+        )),
+        columnPrompts: prompts,
+      })
+    }
     setIsColumnPromptOpen(false)
   }
 
@@ -123,19 +114,6 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
     updateSheet({
       ...activeSheet,
       rows: [...activeSheet.rows, emptyRow(activeSheet.columns.length)],
-    })
-  }
-
-  const renameColumn = (columnIndex: number) => {
-    const currentName = activeSheet.columns[columnIndex]
-    const name = window.prompt('Rename column', currentName)?.trim()
-    if (!name || name === currentName) return
-
-    updateSheet({
-      ...activeSheet,
-      columns: activeSheet.columns.map((column, index) => (
-        index === columnIndex ? name : column
-      )),
     })
   }
 
@@ -162,6 +140,129 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
         : row
     ))
     updateSheet({ ...activeSheet, rows })
+  }
+
+  const columnPrompts = () => (
+    activeSheet.columns.map((_, index) => activeSheet.columnPrompts?.[index] ?? null)
+  )
+
+  const measureColumnWidth = (columnIndex: number) => {
+    const header = activeSheet.columns[columnIndex] ?? ''
+    const longest = activeSheet.rows.reduce((max, row) => {
+      const cell = row[columnIndex] ?? ''
+      return cell.length > max.length ? cell : max
+    }, header)
+    return Math.max(160, Math.min(480, 48 + longest.length * 8))
+  }
+
+  const applyColumnShift = (fromIndex: number, delta: 1 | -1) => {
+    setColumnWidths((current) => shiftColumnRecord(current, fromIndex, delta))
+    setPinnedColumns((current) => shiftColumnRecord(current, fromIndex, delta))
+    setFilterColumn((current) => shiftColumnIndex(current, fromIndex, delta))
+    setSortColumn((current) => shiftColumnIndex(current, fromIndex, delta))
+  }
+
+  const pinnedOffset = (columnIndex: number, side: PinSide) => {
+    const rowNumberWidth = 74
+    return activeSheet.columns.reduce((offset, _, index) => {
+      if (pinnedColumns[index] !== side) return offset
+      if (side === 'left' && index >= columnIndex) return offset
+      if (side === 'right' && index <= columnIndex) return offset
+      return offset + (columnWidths[index] ?? 280)
+    }, side === 'left' ? rowNumberWidth : 0)
+  }
+
+  const handleFilterAction = (columnIndex: number, action: FilterDropdownAction) => {
+    if (action === 'sort-ascending' || action === 'sort-descending') {
+      const direction = action === 'sort-ascending' ? 'asc' : 'desc'
+      const rows = [...activeSheet.rows].sort((first, second) => {
+        const comparison = (first[columnIndex] ?? '').localeCompare(
+          second[columnIndex] ?? '',
+          undefined,
+          { numeric: true, sensitivity: 'base' },
+        )
+        return direction === 'asc' ? comparison : -comparison
+      })
+      updateSheet({ ...activeSheet, rows })
+      setSortColumn(columnIndex)
+      return
+    }
+
+    if (action === 'add-left' || action === 'add-right') {
+      const insertAt = action === 'add-left' ? columnIndex : columnIndex + 1
+      const name = `Column ${activeSheet.columns.length + 1}`
+      const prompts = columnPrompts()
+      prompts.splice(insertAt, 0, null)
+      updateSheet({
+        ...activeSheet,
+        columns: [
+          ...activeSheet.columns.slice(0, insertAt),
+          name,
+          ...activeSheet.columns.slice(insertAt),
+        ],
+        rows: activeSheet.rows.map((row) => [
+          ...row.slice(0, insertAt),
+          '',
+          ...row.slice(insertAt),
+        ]),
+        columnPrompts: prompts,
+      })
+      applyColumnShift(insertAt, 1)
+      return
+    }
+
+    if (action === 'pin-left' || action === 'pin-right') {
+      setPinnedColumns((current) => ({
+        ...current,
+        [columnIndex]: action === 'pin-left' ? 'left' : 'right',
+      }))
+      return
+    }
+
+    if (action === 'unpin') {
+      setPinnedColumns((current) => {
+        const next = { ...current }
+        delete next[columnIndex]
+        return next
+      })
+      return
+    }
+
+    if (action === 'autosize') {
+      setColumnWidths((current) => ({
+        ...current,
+        [columnIndex]: measureColumnWidth(columnIndex),
+      }))
+      return
+    }
+
+    if (action === 'autosize-all') {
+      setColumnWidths(
+        Object.fromEntries(
+          activeSheet.columns.map((_, index) => [index, measureColumnWidth(index)]),
+        ),
+      )
+      return
+    }
+
+    if (action === 'reset') {
+      setColumnWidths({})
+      setPinnedColumns({})
+      setSortColumn(null)
+      return
+    }
+
+    if (action === 'delete' && activeSheet.columns.length > 1) {
+      const prompts = columnPrompts()
+      prompts.splice(columnIndex, 1)
+      updateSheet({
+        ...activeSheet,
+        columns: activeSheet.columns.filter((_, index) => index !== columnIndex),
+        rows: activeSheet.rows.map((row) => row.filter((_, index) => index !== columnIndex)),
+        columnPrompts: prompts,
+      })
+      applyColumnShift(columnIndex, -1)
+    }
   }
 
   return (
@@ -263,38 +364,61 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
           <thead>
             <tr>
               <th className="spreadsheet-row-number" aria-label="Row number">1</th>
-              {activeSheet.columns.map((column, columnIndex) => (
-                <th key={`${columnIndex}-${column}`}>
-                  <span className="spreadsheet-column-name">{column}</span>
-                  <span className="spreadsheet-column-actions">
-                    <button
-                      type="button"
-                      aria-label={`Filter ${column}`}
-                      className={filterColumn === columnIndex ? 'is-selected' : ''}
-                      onClick={() => {
-                        setFilterColumn(filterColumn === columnIndex ? null : columnIndex)
-                        setFilterText('')
-                      }}
-                    >
-                      <AppIcon name="filter" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`More options for ${column}`}
-                      onClick={() => renameColumn(columnIndex)}
-                    >
-                      <AppIcon name="more" />
-                    </button>
-                  </span>
-                </th>
-              ))}
+              {activeSheet.columns.map((column, columnIndex) => {
+                const pinSide = pinnedColumns[columnIndex]
+                const width = columnWidths[columnIndex]
+                return (
+                  <th
+                    key={`${columnIndex}-${column}`}
+                    className={pinSide ? `is-pinned-${pinSide}` : undefined}
+                    style={{
+                      width,
+                      minWidth: width,
+                      [pinSide === 'left' ? 'left' : 'right']: pinSide
+                        ? pinnedOffset(columnIndex, pinSide)
+                        : undefined,
+                    }}
+                  >
+                    <span className="spreadsheet-column-name">{column}</span>
+                    <span className="spreadsheet-column-actions">
+                      <FilterDropdown
+                        columnName={column}
+                        isActive={
+                          filterColumn === columnIndex
+                          || sortColumn === columnIndex
+                          || Boolean(pinSide)
+                        }
+                        isPinned={Boolean(pinSide)}
+                        canDelete={activeSheet.columns.length > 1}
+                        onAction={(action) => handleFilterAction(columnIndex, action)}
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Configure prompt for ${column}`}
+                        aria-expanded={isColumnPromptOpen && promptColumnIndex === columnIndex}
+                        onClick={(event) => {
+                          setColumnPromptAnchor(event.currentTarget)
+                          setPromptColumnIndex(columnIndex)
+                          setIsColumnPromptOpen(true)
+                        }}
+                      >
+                        <AppIcon name="more" />
+                      </button>
+                    </span>
+                  </th>
+                )
+              })}
               <th className="spreadsheet-add-column-cell">
                 <button
                   ref={addColumnButton}
                   type="button"
-                  onClick={() => setIsColumnPromptOpen(true)}
+                  aria-expanded={isColumnPromptOpen && promptColumnIndex === null}
+                  onClick={(event) => {
+                    setColumnPromptAnchor(event.currentTarget)
+                    setPromptColumnIndex(null)
+                    setIsColumnPromptOpen(true)
+                  }}
                   aria-label="Configure and add column"
-                  aria-expanded={isColumnPromptOpen}
                 >
                   <AppIcon name="plus" />
                 </button>
@@ -305,15 +429,29 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
             {visibleRows.map(({ row, index }) => (
               <tr key={index}>
                 <th className="spreadsheet-row-number" scope="row">{index + 2}</th>
-                {row.map((value, columnIndex) => (
-                  <td key={columnIndex}>
-                    <input
-                      aria-label={`Row ${index + 1}, ${activeSheet.columns[columnIndex]}`}
-                      value={value}
-                      onChange={(event) => updateCell(index, columnIndex, event.target.value)}
-                    />
-                  </td>
-                ))}
+                {row.map((value, columnIndex) => {
+                  const pinSide = pinnedColumns[columnIndex]
+                  const width = columnWidths[columnIndex]
+                  return (
+                    <td
+                      key={columnIndex}
+                      className={pinSide ? `is-pinned-${pinSide}` : undefined}
+                      style={{
+                        width,
+                        minWidth: width,
+                        [pinSide === 'left' ? 'left' : 'right']: pinSide
+                          ? pinnedOffset(columnIndex, pinSide)
+                          : undefined,
+                      }}
+                    >
+                      <input
+                        aria-label={`Row ${index + 1}, ${activeSheet.columns[columnIndex]}`}
+                        value={value}
+                        onChange={(event) => updateCell(index, columnIndex, event.target.value)}
+                      />
+                    </td>
+                  )
+                })}
               </tr>
             ))}
             <tr>
@@ -329,132 +467,19 @@ export function SpreadsheetWorkspace({ sheets, onChange }: SpreadsheetWorkspaceP
           </tbody>
         </table>
       </div>
-      {isColumnPromptOpen && createPortal(
-        <form
-          ref={columnPromptDialog}
-          className="column-prompt-dialog"
-          role="dialog"
-          aria-modal="false"
-          aria-labelledby="column-prompt-title"
-          style={{ top: columnPromptPosition.top, left: columnPromptPosition.left }}
-          onSubmit={(event) => {
-            event.preventDefault()
-            addColumn({
-              context: columnContext.trim(),
-              model: columnModel,
-              autoRun: isColumnAutoRunEnabled,
-              focusMode: isColumnFocusMode,
-              attachmentName: columnAttachmentName,
-              prompt: columnPrompt.trim(),
-            })
-          }}
-        >
-          <header className="column-prompt-header">
-            <h2 id="column-prompt-title">Configure column prompt</h2>
-            <button
-              className="column-prompt-close"
-              type="button"
-              aria-label="Close column prompt"
-              onClick={() => setIsColumnPromptOpen(false)}
-            >
-              <AppIcon name="close" />
-            </button>
-          </header>
-          <label className="column-prompt-field">
-            <span>Column Title</span>
-            <input
-              autoFocus
-              required
-              value={columnTitle}
-              placeholder="Add column title"
-              onChange={(event) => setColumnTitle(event.target.value)}
-            />
-          </label>
-          <label className="column-prompt-field">
-            <span>Context (Optional)</span>
-            <span className="column-prompt-textarea-wrap">
-              <textarea
-                value={columnContext}
-                placeholder="Add context for the column"
-                onChange={(event) => setColumnContext(event.target.value)}
-              />
-              <button
-                type="button"
-                aria-label="Clear column context"
-                onClick={() => setColumnContext('')}
-              >
-                <AppIcon name="refresh" />
-              </button>
-            </span>
-          </label>
-          <label className="column-prompt-field">
-            <span>Model</span>
-            <select value={columnModel} onChange={(event) => setColumnModel(event.target.value)}>
-              <option>GPT - 4o mini</option>
-              <option>GPT 3.5</option>
-              <option>GPT 4</option>
-            </select>
-          </label>
-          <button
-            className="column-prompt-auto-run"
-            type="button"
-            aria-pressed={isColumnAutoRunEnabled}
-            onClick={() => setIsColumnAutoRunEnabled((enabled) => !enabled)}
-          >
-            <span>Auto run prompt</span>
-            <span className={`column-prompt-toggle${isColumnAutoRunEnabled ? ' is-on' : ''}`} aria-hidden="true">
-              <span />
-            </span>
-          </button>
-          <div className="column-prompt-tools">
-            <button
-              type="button"
-              onClick={() => columnAttachmentInput.current?.click()}
-            >
-              Add attachments <AppIcon name="chevron" />
-            </button>
-            <input
-              ref={columnAttachmentInput}
-              className="visually-hidden"
-              type="file"
-              aria-label="Add a column prompt attachment"
-              onChange={(event) => {
-                setColumnAttachmentName(event.target.files?.[0]?.name ?? '')
-                event.target.value = ''
-              }}
-            />
-            <button
-              type="button"
-              aria-pressed={isColumnFocusMode}
-              onClick={() => setIsColumnFocusMode((enabled) => !enabled)}
-            >
-              Add Focus <AppIcon name="chevron" />
-            </button>
-          </div>
-          {columnAttachmentName && (
-            <span className="column-prompt-attachment">{columnAttachmentName}</span>
-          )}
-          <label className="column-prompt-field column-prompt-main-field">
-            <span>Prompt</span>
-            <span className="column-prompt-textarea-wrap">
-              <textarea
-                value={columnPrompt}
-                placeholder="Enter your prompt here."
-                onChange={(event) => setColumnPrompt(event.target.value)}
-              />
-              <button
-                className="column-prompt-submit"
-                type="submit"
-                aria-label="Add configured column"
-                disabled={!columnTitle.trim()}
-              >
-                <AppIcon name="corner-down-left" />
-              </button>
-            </span>
-          </label>
-        </form>,
-        document.body,
-      )}
+      <ColumnPrompt
+        key={`${activeSheet.id}-${promptColumnIndex ?? 'new'}-${isColumnPromptOpen}`}
+        isOpen={isColumnPromptOpen}
+        anchorElement={columnPromptAnchor}
+        initialTitle={promptColumnIndex === null ? '' : activeSheet.columns[promptColumnIndex] ?? ''}
+        initialConfig={
+          promptColumnIndex === null
+            ? null
+            : activeSheet.columnPrompts?.[promptColumnIndex] ?? null
+        }
+        onClose={() => setIsColumnPromptOpen(false)}
+        onSaveColumn={saveColumn}
+      />
     </div>
   )
 }
