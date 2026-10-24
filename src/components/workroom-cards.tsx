@@ -1,5 +1,4 @@
 // Displays workrooms as cards and links created ones to their editor.
-import { useState } from 'react'
 import { AppIcon } from './app-icon'
 import { EmptyWorkrooms } from './empty-workrooms'
 import type { WorkroomSummary } from '../lib/workrooms'
@@ -14,9 +13,14 @@ function WorkroomCard({
   title,
   spreadsheetCount,
   lastEdited,
+  isFavorite,
+  onToggleFavorite,
   onOpen,
-}: WorkroomSummary & { onOpen?: () => void }) {
-  const [isFavorite, setIsFavorite] = useState(true)
+}: WorkroomSummary & {
+  isFavorite: boolean
+  onToggleFavorite: () => void
+  onOpen?: () => void
+}) {
 
   return (
     <article className={`workroom-card${onOpen ? ' is-openable' : ''}`}>
@@ -28,7 +32,7 @@ function WorkroomCard({
             type="button"
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             aria-pressed={isFavorite}
-            onClick={() => setIsFavorite((favorite) => !favorite)}
+            onClick={onToggleFavorite}
           >
             <AppIcon name="star" />
           </button>
@@ -74,9 +78,13 @@ function WorkroomCard({
 export function WorkroomCards({
   items,
   onOpen,
+  favoriteById,
+  onToggleFavorite,
 }: {
   items: WorkroomSummary[]
   onOpen: (id: string) => void
+  favoriteById: Record<string, boolean>
+  onToggleFavorite: (id: string) => void
 }) {
   if (items.length === 0) {
     return <EmptyWorkrooms />
@@ -88,6 +96,8 @@ export function WorkroomCards({
         <WorkroomCard
           key={workroom.id}
           {...workroom}
+          isFavorite={favoriteById[workroom.id] ?? true}
+          onToggleFavorite={() => onToggleFavorite(workroom.id)}
           onOpen={workroom.isNew ? () => onOpen(workroom.id) : undefined}
         />
       ))}

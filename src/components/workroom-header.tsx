@@ -8,9 +8,13 @@ type WorkroomHeaderProps = {
 }
 
 export function WorkroomHeader({ isSidebarCollapsed, onToggleSidebar }: WorkroomHeaderProps) {
-  const isSpreadsheetEditor = useRouterState({
+  const isWorkspacePage = useRouterState({
     select: (state) => state.location.pathname.startsWith('/workroom/'),
   })
+  const isCommandStudio = useRouterState({
+    select: (state) => state.location.pathname === '/command-studio',
+  })
+  const showProfile = isWorkspacePage || isCommandStudio
 
   return (
     <header className="workroom-header">
@@ -35,7 +39,7 @@ export function WorkroomHeader({ isSidebarCollapsed, onToggleSidebar }: Workroom
       </label>
 
       <nav className="header-actions" aria-label="Workspace actions">
-        {isSpreadsheetEditor && (
+        {isWorkspacePage && (
           <button
             className="header-action editor-refresh-button"
             type="button"
@@ -51,7 +55,7 @@ export function WorkroomHeader({ isSidebarCollapsed, onToggleSidebar }: Workroom
         <button className="icon-button notification-button" type="button" aria-label="Notifications">
           <AppIcon name="bell" />
         </button>
-        {isSpreadsheetEditor ? (
+        {showProfile ? (
           <button className="header-profile-button" type="button" aria-label="Account profile">JD</button>
         ) : (
           <Link className="header-signup" to="/sign-up">Sign up for free</Link>

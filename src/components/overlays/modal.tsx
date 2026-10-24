@@ -2,15 +2,16 @@
 import { useEffect, useId, useRef } from 'react'
 import type { MouseEvent, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import '../styles/modal.css'
+import './modal.css'
 
 type ModalProps = {
   title: string
   children: ReactNode
   onClose: () => void
+  className?: string
 }
 
-export function Modal({ title, children, onClose }: ModalProps) {
+export function Modal({ title, children, onClose, className }: ModalProps) {
   const titleId = useId()
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -57,7 +58,7 @@ export function Modal({ title, children, onClose }: ModalProps) {
     <div className="app-modal-backdrop" onMouseDown={closeOnBackdrop}>
       <section
         ref={modalRef}
-        className="app-modal"
+        className={`app-modal${className ? ` ${className}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

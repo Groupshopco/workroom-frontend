@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AppIcon } from './app-icon'
-import '../styles/column-prompt.css'
+import './overlays/column-prompt.css'
 import type { WorkroomColumnPromptConfig, WorkroomSheet } from '../lib/workrooms'
 
 type SpreadsheetWorkspaceProps = {

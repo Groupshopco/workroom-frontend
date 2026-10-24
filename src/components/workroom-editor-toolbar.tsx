@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { AppIcon } from './app-icon'
-import { Modal } from './modal'
+import { Modal } from './overlays/modal'
 
 type WorkroomEditorToolbarProps = {
   title: string

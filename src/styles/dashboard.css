@@ -67,7 +67,6 @@
 }
 
 .toolbar-search-button,
-.sort-workrooms-button,
 .new-workroom-button {
   display: inline-flex;
   min-height: 38px;
@@ -88,16 +87,6 @@
 
 .toolbar-search-button {
   width: 38px;
-}
-
-.sort-workrooms-button {
-  padding: 0 12px;
-}
-
-.sort-workrooms-button svg {
-  width: 16px;
-  height: 16px;
-  transform: rotate(90deg);
 }
 
 .new-workroom-button {
@@ -159,4 +148,3 @@
 .create-workroom-button:hover {
   background: #d9573e;
 }
-

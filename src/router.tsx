@@ -1,6 +1,7 @@
 import { Outlet, createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
 import { SignInPage, SignUpPage } from './pages/auth-pages'
 import { DashboardPage } from './pages/dashboard-page'
+import { CommandStudioPage } from './pages/command-studio-page'
 import { WorkroomEditorPage } from './pages/workroom-editor-page'
 
 const rootRoute = createRootRoute({
@@ -39,6 +40,12 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 })
 
+const commandStudioRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/command-studio',
+  component: CommandStudioPage,
+})
+
 const workroomRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/workroom/$workroomId',
@@ -50,6 +57,7 @@ const routeTree = rootRoute.addChildren([
   signInRoute,
   signUpRoute,
   dashboardRoute,
+  commandStudioRoute,
   workroomRoute,
 ])
 

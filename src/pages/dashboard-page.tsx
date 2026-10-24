@@ -1,51 +1,51 @@
 // Lists workrooms and starts creating new ones.
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import type { SortOption } from '../components/overlays/sort-dropdown'
 import { WorkroomCards } from '../components/workroom-cards'
 import { WorkroomLayout } from '../components/workroom-layout'
 import { WorkroomListToolbar } from '../components/workroom-list-toolbar'
 import { createWorkroom, getWorkroomSummaries } from '../lib/workrooms'
-/*
-import { authClient } from '../lib/auth-client'
-import { UsersTable } from '../components/users-table'
 
-export function DashboardPage() {
-  return (
-    <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <h1 className="text-lg font-bold">Dashboard</h1>
-          <button
-            type="button"
-            onClick={async () => {
-              await authClient.signOut()
-              window.location.href = '/sign-in'
-            }}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        <h2 className="mb-4 text-xl font-semibold">Team Members</h2>
-        <UsersTable />
-      </main>
-
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-4 text-sm text-slate-600">
-          Boilerplate footer
-        </div>
-      </footer>
-    </div>
-  )
-}
-*/
+const relativeTimeReference = Date.UTC(9999, 0, 1)
 
 export function DashboardPage() {
   const navigate = useNavigate()
   const [workrooms] = useState(getWorkroomSummaries)
+  const [sortBy, setSortBy] = useState<SortOption>('recent')
+  const [favoriteById, setFavoriteById] = useState<Record<string, boolean>>({})
+
+  const sortedWorkrooms = useMemo(() => {
+    const getEditedAt = (value: string) => {
+      const date = Date.parse(value)
+      if (!Number.isNaN(date)) return date
+      if (value.toLowerCase() === 'just now') return relativeTimeReference
+
+      const relativeTime = value.match(/(\d+)\s+(minute|hour|day|week|month|year)s?\s+ago/i)
+      if (!relativeTime) return 0
+
+      const unitsInMinutes: Record<string, number> = {
+        minute: 1,
+        hour: 60,
+        day: 1440,
+        week: 10080,
+        month: 43200,
+        year: 525600,
+      }
+      const elapsed = Number(relativeTime[1]) * unitsInMinutes[relativeTime[2].toLowerCase()]
+      return relativeTimeReference - elapsed * 60_000
+    }
+
+    return [...workrooms].sort((first, second) => {
+      if (sortBy === 'favorites') {
+        return Number(favoriteById[second.id] ?? true) - Number(favoriteById[first.id] ?? true)
+      }
+      const firstEditedAt = getEditedAt(first.lastEdited)
+      const secondEditedAt = getEditedAt(second.lastEdited)
+      if (sortBy === 'oldest') return firstEditedAt - secondEditedAt
+      return secondEditedAt - firstEditedAt
+    })
+  }, [workrooms, sortBy, favoriteById])
 
   const handleCreateWorkroom = () => {
     const workroom = createWorkroom()
@@ -69,8 +69,18 @@ export function DashboardPage() {
           title="Try Workroom: AI-Powered Spreadsheet editor"
           description="Quickly generate, customize, and manage large spreadsheets."
           onCreateWorkroom={handleCreateWorkroom}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
         />
-        <WorkroomCards items={workrooms} onOpen={handleOpenWorkroom} />
+        <WorkroomCards
+          items={sortedWorkrooms}
+          onOpen={handleOpenWorkroom}
+          favoriteById={favoriteById}
+          onToggleFavorite={(workroomId) => setFavoriteById((current) => ({
+            ...current,
+            [workroomId]: !(current[workroomId] ?? true),
+          }))}
+        />
       </section>
     </WorkroomLayout>
   )

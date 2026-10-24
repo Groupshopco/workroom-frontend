@@ -1,16 +1,21 @@
 // Shows the dashboard heading and workroom list actions.
 import { AppIcon } from './app-icon'
+import { SortDropdown, type SortOption } from './overlays/sort-dropdown'
 
 type WorkroomListToolbarProps = {
   title: string
   description: string
   onCreateWorkroom: () => void
+  sortBy: SortOption
+  onSortChange: (value: SortOption) => void
 }
 
 export function WorkroomListToolbar({
   title,
   description,
   onCreateWorkroom,
+  sortBy,
+  onSortChange,
 }: WorkroomListToolbarProps) {
   return (
     <div className="workroom-list-toolbar">
@@ -27,10 +32,12 @@ export function WorkroomListToolbar({
         >
           <AppIcon name="search" />
         </button>
-        <button className="sort-workrooms-button" type="button">
-          <AppIcon name="chevron" />
-          <span>Most recent</span>
-        </button>
+        <SortDropdown
+          value={sortBy}
+          onChange={onSortChange}
+          label="Sort workrooms"
+          className="sort-workrooms-dropdown"
+        />
         <button className="new-workroom-button" type="button" onClick={onCreateWorkroom}>
           <AppIcon name="plus" />
           <span>New workroom</span>
