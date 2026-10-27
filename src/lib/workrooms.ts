@@ -12,6 +12,8 @@ export type WorkroomColumnPromptConfig = {
   autoRun: boolean
   focusMode: boolean
   attachmentName: string
+  attachmentImageName?: string
+  attachmentUrl?: string
   prompt: string
 }
 

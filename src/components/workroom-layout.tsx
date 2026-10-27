@@ -13,14 +13,16 @@ type WorkroomLayoutProps = {
   children: ReactNode
   isCommandCenterOpen?: boolean
   onCommandCenterOpenChange?: (isOpen: boolean) => void
+  isSidebarCollapsedByDefault?: boolean
 }
 
 export function WorkroomLayout({
   children,
   isCommandCenterOpen = false,
   onCommandCenterOpenChange,
+  isSidebarCollapsedByDefault = false,
 }: WorkroomLayoutProps) {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(isSidebarCollapsedByDefault)
   const isSidebarHidden = isSidebarCollapsed || isCommandCenterOpen
 
   const toggleSidebar = () => {

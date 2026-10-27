@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AppIcon } from '../app-icon'
+import { ColumnAttachmentDropdown } from './column-attachment-dropdown'
 import './column-prompt.css'
 import type { WorkroomColumnPromptConfig } from '../../lib/workrooms'
 
@@ -29,24 +30,48 @@ export function ColumnPrompt({
   const [isColumnFocusMode, setIsColumnFocusMode] = useState(initialConfig?.focusMode ?? false)
   const [columnPrompt, setColumnPrompt] = useState(initialConfig?.prompt ?? '')
   const [columnAttachmentName, setColumnAttachmentName] = useState(initialConfig?.attachmentName ?? '')
+  const [columnAttachmentImageName, setColumnAttachmentImageName] = useState(initialConfig?.attachmentImageName ?? '')
+  const [columnAttachmentUrl, setColumnAttachmentUrl] = useState(initialConfig?.attachmentUrl ?? '')
   const dialogRef = useRef<HTMLFormElement>(null)
-  const attachmentInput = useRef<HTMLInputElement>(null)
+  const attachmentMenu = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     if (!isOpen || !anchorElement || !dialogRef.current) return
 
-    const buttonBounds = anchorElement.getBoundingClientRect()
-    const dialogBounds = dialogRef.current.getBoundingClientRect()
-    setPosition({
-      top: Math.max(
-        8,
-        Math.min(buttonBounds.bottom + 12, window.innerHeight - dialogBounds.height - 8),
-      ),
-      left: Math.max(
-        8,
-        Math.min(buttonBounds.left - 40, window.innerWidth - dialogBounds.width - 8),
-      ),
-    })
+    const updatePosition = () => {
+      if (!dialogRef.current) return
+
+      const buttonBounds = anchorElement.getBoundingClientRect()
+      const dialogBounds = dialogRef.current.getBoundingClientRect()
+      const nextPosition = {
+        top: Math.max(
+          8,
+          Math.min(buttonBounds.bottom + 12, window.innerHeight - dialogBounds.height - 8),
+        ),
+        left: Math.max(
+          8,
+          Math.min(buttonBounds.left - 40, window.innerWidth - dialogBounds.width - 8),
+        ),
+      }
+
+      setPosition((current) => (
+        current.top === nextPosition.top && current.left === nextPosition.left
+          ? current
+          : nextPosition
+      ))
+    }
+
+    updatePosition()
+    const resizeObserver = new ResizeObserver(updatePosition)
+    resizeObserver.observe(dialogRef.current)
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
   }, [anchorElement, isOpen])
 
   useEffect(() => {
@@ -55,11 +80,16 @@ export function ColumnPrompt({
     const closeOnOutsideClick = (event: MouseEvent) => {
       const target = event.target
       if (!(target instanceof Node)) return
-      if (dialogRef.current?.contains(target) || anchorElement?.contains(target)) return
+      if (
+        dialogRef.current?.contains(target)
+        || anchorElement?.contains(target)
+        || attachmentMenu.current?.contains(target)
+      ) return
       onClose()
     }
 
     const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.target instanceof Node && attachmentMenu.current?.contains(event.target)) return
       if (event.key === 'Escape') onClose()
     }
 
@@ -82,122 +112,128 @@ export function ColumnPrompt({
       autoRun: isColumnAutoRunEnabled,
       focusMode: isColumnFocusMode,
       attachmentName: columnAttachmentName,
+      attachmentImageName: columnAttachmentImageName,
+      attachmentUrl: columnAttachmentUrl.trim(),
       prompt: columnPrompt.trim(),
     })
-
   }
 
   if (!isOpen) return null
 
-  return createPortal(
-    <form
-      ref={dialogRef}
-      className="column-prompt-dialog"
-      role="dialog"
-      aria-modal="false"
-      aria-labelledby="column-prompt-title"
-      style={{ top: position.top, left: position.left }}
-      onSubmit={handleSubmit}
-    >
-      <header className="column-prompt-header">
-        <h2 id="column-prompt-title">Configure column prompt</h2>
-        <button
-          className="column-prompt-close"
-          type="button"
-          aria-label="Close column prompt"
-          onClick={onClose}
+  return (
+    <>
+      {createPortal(
+        <form
+          ref={dialogRef}
+          className="column-prompt-dialog"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="column-prompt-title"
+          style={{ top: position.top, left: position.left }}
+          onSubmit={handleSubmit}
         >
-          <AppIcon name="close" />
-        </button>
-      </header>
-      <label className="column-prompt-field">
-        <span>Column Title</span>
-        <input
-          autoFocus
-          required
-          value={columnTitle}
-          placeholder="Add column title"
-          onChange={(event) => setColumnTitle(event.target.value)}
-        />
-      </label>
-      <label className="column-prompt-field">
-        <span>Context (Optional)</span>
-        <span className="column-prompt-textarea-wrap">
-          <textarea
-            value={columnContext}
-            placeholder="Add context for the column"
-            onChange={(event) => setColumnContext(event.target.value)}
-          />
+          <header className="column-prompt-header">
+            <h2 id="column-prompt-title">Configure column prompt</h2>
+            <button
+              className="column-prompt-close"
+              type="button"
+              aria-label="Close column prompt"
+              onClick={onClose}
+            >
+              <AppIcon name="close" />
+            </button>
+          </header>
+          <label className="column-prompt-field">
+            <span>Column Title</span>
+            <input
+              autoFocus
+              required
+              value={columnTitle}
+              placeholder="Add column title"
+              onChange={(event) => setColumnTitle(event.target.value)}
+            />
+          </label>
+          <label className="column-prompt-field">
+            <span>Context (Optional)</span>
+            <span className="column-prompt-textarea-wrap">
+              <textarea
+                value={columnContext}
+                placeholder="Add context for the column"
+                onChange={(event) => setColumnContext(event.target.value)}
+              />
+              <button
+                type="button"
+                aria-label="Clear column context"
+                onClick={() => setColumnContext('')}
+              >
+                <AppIcon name="refresh" />
+              </button>
+            </span>
+          </label>
+          <label className="column-prompt-field">
+            <span>Model</span>
+            <select value={columnModel} onChange={(event) => setColumnModel(event.target.value)}>
+              <option>GPT - 4o mini</option>
+              <option>GPT 3.5</option>
+              <option>GPT 4</option>
+            </select>
+          </label>
           <button
+            className="column-prompt-auto-run"
             type="button"
-            aria-label="Clear column context"
-            onClick={() => setColumnContext('')}
+            aria-pressed={isColumnAutoRunEnabled}
+            onClick={() => setIsColumnAutoRunEnabled((enabled) => !enabled)}
           >
-            <AppIcon name="refresh" />
+            <span>Auto run prompt</span>
+            <span
+              className={`column-prompt-toggle${isColumnAutoRunEnabled ? ' is-on' : ''}`}
+              aria-hidden="true"
+            >
+              <span />
+            </span>
           </button>
-        </span>
-      </label>
-      <label className="column-prompt-field">
-        <span>Model</span>
-        <select value={columnModel} onChange={(event) => setColumnModel(event.target.value)}>
-          <option>GPT - 4o mini</option>
-          <option>GPT 3.5</option>
-          <option>GPT 4</option>
-        </select>
-      </label>
-      <button
-        className="column-prompt-auto-run"
-        type="button"
-        aria-pressed={isColumnAutoRunEnabled}
-        onClick={() => setIsColumnAutoRunEnabled((enabled) => !enabled)}
-      >
-        <span>Auto run prompt</span>
-        <span className={`column-prompt-toggle${isColumnAutoRunEnabled ? ' is-on' : ''}`} aria-hidden="true">
-          <span />
-        </span>
-      </button>
-      <div className="column-prompt-tools">
-        <button type="button" onClick={() => attachmentInput.current?.click()}>
-          Add attachments <AppIcon name="chevron" />
-        </button>
-        <input
-          ref={attachmentInput}
-          className="visually-hidden"
-          type="file"
-          aria-label="Add a column prompt attachment"
-          onChange={(event) => {
-            setColumnAttachmentName(event.target.files?.[0]?.name ?? '')
-            event.target.value = ''
-          }}
-        />
-        <button
-          type="button"
-          aria-pressed={isColumnFocusMode}
-          onClick={() => setIsColumnFocusMode((enabled) => !enabled)}
-        >
-          Add Focus <AppIcon name="chevron" />
-        </button>
-      </div>
-      {columnAttachmentName && <span className="column-prompt-attachment">{columnAttachmentName}</span>}
-      <label className="column-prompt-field column-prompt-main-field">
-        <span>Prompt</span>
-        <span className="column-prompt-textarea-wrap">
-          <textarea
-            value={columnPrompt}
-            placeholder="Enter your prompt here."
-            onChange={(event) => setColumnPrompt(event.target.value)}
-          />
-          <button
-            className="column-prompt-submit"
-            type="submit"
-            aria-label={initialTitle ? 'Save column settings' : 'Add configured column'}
-            disabled={!columnTitle.trim()}
-          >
-            <AppIcon name="corner-down-left" />
-          </button>
-        </span>
-      </label>
-    </form>,
-    document.body,
+          <div className="column-prompt-tools">
+            <ColumnAttachmentDropdown
+              promptRef={dialogRef}
+              menuRef={attachmentMenu}
+              attachmentName={columnAttachmentName}
+              attachmentImageName={columnAttachmentImageName}
+              attachmentUrl={columnAttachmentUrl}
+              onAttachmentChange={(name, imageName, url) => {
+                setColumnAttachmentName(name)
+                setColumnAttachmentImageName(imageName)
+                setColumnAttachmentUrl(url)
+              }}
+            />
+            <button
+              type="button"
+              aria-pressed={isColumnFocusMode}
+              onClick={() => setIsColumnFocusMode((enabled) => !enabled)}
+            >
+              Add Focus <AppIcon name="chevron" />
+            </button>
+          </div>
+          <label className="column-prompt-field column-prompt-main-field">
+            <span>Prompt</span>
+            <span className="column-prompt-textarea-wrap">
+              <textarea
+                value={columnPrompt}
+                placeholder="Enter your prompt here."
+                onChange={(event) => setColumnPrompt(event.target.value)}
+              />
+              <button
+                className="column-prompt-submit"
+                type="submit"
+                aria-label={initialTitle ? 'Save column settings' : 'Add configured column'}
+                disabled={!columnTitle.trim()}
+              >
+                <AppIcon name="corner-down-left" />
+              </button>
+            </span>
+          </label>
+        </form>,
+        document.body,
+      )}
+    </>
   )
 }

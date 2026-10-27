@@ -186,17 +186,27 @@
   background: #fff0ec;
 }
 
+.column-prompt-tools .column-attachment-trigger[aria-expanded='true'] {
+  color: #bd4c37;
+  background: #fbe0db;
+}
+
+.column-attachment-count {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #fff;
+  background: #e96349;
+  font-size: 8px;
+  line-height: 1;
+}
+
 .column-prompt-tools svg {
   width: 13px;
   height: 13px;
-}
-
-.column-prompt-attachment {
-  overflow: hidden;
-  color: #777;
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .column-prompt-main-field .column-prompt-textarea-wrap textarea {

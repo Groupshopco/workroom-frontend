@@ -29,7 +29,7 @@ function parseCsv(text: string, fallbackName: string): WorkroomSheet {
 export function WorkroomEditorPage() {
   const { workroomId } = useParams({ from: '/workroom/$workroomId' })
   const [workroom, setWorkroom] = useState(() => getWorkroom(workroomId))
-  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(true)
+  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false)
 
   const updateWorkroom = (changes: Partial<WorkroomRecord>) => {
     if (!workroom) return
@@ -48,7 +48,7 @@ export function WorkroomEditorPage() {
 
   if (!workroom) {
     return (
-      <WorkroomLayout>
+      <WorkroomLayout isSidebarCollapsedByDefault>
         <section className="spreadsheet-editor spreadsheet-not-found">
           <p>This workroom could not be found.</p>
           <Link to="/dashboard">Back to dashboard</Link>
@@ -59,6 +59,7 @@ export function WorkroomEditorPage() {
 
   return (
     <WorkroomLayout
+      isSidebarCollapsedByDefault
       isCommandCenterOpen={isCommandCenterOpen}
       onCommandCenterOpenChange={setIsCommandCenterOpen}
     >
